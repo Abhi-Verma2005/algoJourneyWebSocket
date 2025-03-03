@@ -3,13 +3,14 @@ import express from 'express'
 import cors from 'cors'
 import axios from 'axios'
 import http from 'http'
+import dotenv from 'dotenv';
+dotenv.config();
 const app = express()
 app.use(cors())
 app.use(express.json())
 
 const httpServer = http.createServer()
 
-console.log('hi there')
 
 const io = new Server(httpServer, {
     cors: {
@@ -18,15 +19,25 @@ const io = new Server(httpServer, {
     },
 });
 
+const BACKEND_URL = process.env.BACKEND || 'http://your-backend-url';
+
 io.on('connection', (socket) => {
     console.log('Connected')
-    socket.on('addQuestion', async ({ questions, contestId }) => {
+    socket.on('addQuestion', async ({ q, contestId }) => {
         try{
-            const res = await axios.post(`${process.env.BACKEND}/api/updateContest`, { questions, contestId })
+            const question = {
+                questionId: q.id,
+                question: q
+            }
+
+            const res = await axios.post(`${BACKEND_URL}/api/realTimeAddQuestion`, { questions: [question], contestId })
+            // console.log(res)
             if(!(res.status === 200)){
                 socket.emit('error', { message: 'Failed to add question' })
             }
-            socket.emit('success', { questions })
+            const questions = res.data
+            console.log(questions)
+            socket.emit('contestUpdate', { questions })
         } catch (error){
             console.log('Error in add Question socket', error)
             socket.emit('error', { message: 'Unexpected error' })
