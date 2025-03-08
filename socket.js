@@ -37,7 +37,7 @@ io.on('connection', (socket) => {
             }
             const questions = res.data
             console.log(questions)
-            socket.emit('contestUpdate', { questions })
+            io.emit('contestUpdate', { questions })
         } catch (error){
             console.log('Error in add Question socket', error)
             socket.emit('error', { message: 'Unexpected error' })
